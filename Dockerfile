@@ -1,24 +1,21 @@
-# Use an official Ubuntu image as the base image
-FROM ubuntu:latest
-
-# Set noninteractive mode for apt-get to avoid prompts during the build
-ARG DEBIAN_FRONTEND=noninteractive
+# Use an official CentOS image as the base image
+FROM centos:latest
 
 # Install essential packages
-RUN apt-get update && apt-get install -y \
-    apache2 \
-    mysql-server \
+RUN yum -y update && \
+    yum -y install httpd \
+    mariadb-server \
+    mariadb \
     php \
-    libapache2-mod-php \
     php-mysql \
     php-gd \
     php-curl \
     php-xml \
     unzip \
-    && rm -rf /var/lib/apt/lists/*
+    && yum clean all
 
-# Configure Apache
-RUN a2enmod rewrite
+# Start Apache and MySQL services
+RUN systemctl enable httpd && systemctl enable mariadb
 
 # Set up MySQL root password and create WordPress database
 ENV MYSQL_ROOT_PASSWORD=root
@@ -26,22 +23,20 @@ ENV MYSQL_DATABASE=wordpress
 ENV MYSQL_USER=wordpress_user
 ENV MYSQL_PASSWORD=wordpress_password
 
+# Install EPEL repository and PHPMyAdmin
+RUN yum -y install epel-release && \
+    yum -y install phpmyadmin
+
 # Copy the WordPress code into the container
 COPY ./wordpress /var/www/html
-
-# Install PHPMyAdmin
-RUN apt-get update && apt-get install -y phpmyadmin
-
-# Create a symbolic link for PHPMyAdmin to work with Apache
-RUN ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
 
 # Set the working directory
 WORKDIR /var/www/html
 
-# Expose ports for web, MySQL, and PHPMyAdmin
+# Expose ports for web and MySQL
 EXPOSE 80
+EXPOSE 443
 EXPOSE 3306
-EXPOSE 8080
 
 # Start services
-CMD service mysql start && apache2ctl -D FOREGROUND
+CMD systemctl start mariadb && systemctl start httpd && systemctl status httpd && /bin/bash
