@@ -32,7 +32,7 @@ COPY ./wordpress /var/www/html
 WORKDIR /var/www/html
 
 # Expose ports for web and MySQL
-EXPOSE 80
+EXPOSE 80 443
 EXPOSE 3306
 
 # Start services
