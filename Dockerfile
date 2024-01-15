@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     php-gd \
     php-curl \
     php-xml \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure Apache
@@ -28,12 +29,19 @@ ENV MYSQL_PASSWORD=wordpress_password
 # Copy the WordPress code into the container
 COPY ./wordpress /var/www/html
 
+# Install PHPMyAdmin
+RUN apt-get update && apt-get install -y phpmyadmin
+
+# Create a symbolic link for PHPMyAdmin to work with Apache
+RUN ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
+
 # Set the working directory
 WORKDIR /var/www/html
 
-# Expose ports for web and MySQL
-EXPOSE 80 443
+# Expose ports for web, MySQL, and PHPMyAdmin
+EXPOSE 80
 EXPOSE 3306
+EXPOSE 8080
 
 # Start services
 CMD service mysql start && apache2ctl -D FOREGROUND
